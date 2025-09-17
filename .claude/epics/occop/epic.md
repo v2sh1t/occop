@@ -2,7 +2,7 @@
 name: occop
 status: backlog
 created: 2025-09-16T19:07:09Z
-progress: 0%
+progress: 11%
 prd: .claude/prds/occop.md
 github: https://github.com/v2sh1t/occop/issues/1
 ---
