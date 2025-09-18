@@ -18,6 +18,7 @@ namespace Occop.Core.Services.Environment
         private readonly ConcurrentDictionary<EnvironmentType, CacheEntry> _cache;
         private readonly TimeSpan _cacheExpiration;
         private readonly object _monitoringLock = new object();
+        private readonly ShellDetectorManager _shellDetectorManager;
         private bool _isMonitoring;
         private bool _disposed;
 
@@ -50,6 +51,20 @@ namespace Occop.Core.Services.Environment
         {
             _cache = new ConcurrentDictionary<EnvironmentType, CacheEntry>();
             _cacheExpiration = TimeSpan.FromMinutes(cacheExpirationMinutes);
+            _shellDetectorManager = new ShellDetectorManager();
+
+            // 注册所有Shell检测器
+            InitializeShellDetectors();
+        }
+
+        /// <summary>
+        /// 初始化Shell检测器
+        /// </summary>
+        private void InitializeShellDetectors()
+        {
+            _shellDetectorManager.RegisterDetector(ShellType.PowerShell51, new PowerShell51Detector());
+            _shellDetectorManager.RegisterDetector(ShellType.PowerShellCore, new PowerShellCoreDetector());
+            _shellDetectorManager.RegisterDetector(ShellType.GitBash, new GitBashDetector());
         }
 
         /// <summary>
@@ -114,31 +129,16 @@ namespace Occop.Core.Services.Environment
                 return cachedEntry.EnvironmentInfo;
             }
 
-            var environmentInfo = new EnvironmentInfo(environmentType);
+            EnvironmentInfo environmentInfo;
 
             try
             {
-                switch (environmentType)
-                {
-                    case EnvironmentType.PowerShell51:
-                        await DetectPowerShell51Async(environmentInfo);
-                        break;
-                    case EnvironmentType.PowerShellCore:
-                        await DetectPowerShellCoreAsync(environmentInfo);
-                        break;
-                    case EnvironmentType.GitBash:
-                        await DetectGitBashAsync(environmentInfo);
-                        break;
-                    case EnvironmentType.ClaudeCode:
-                        await DetectClaudeCodeAsync(environmentInfo);
-                        break;
-                    default:
-                        environmentInfo.SetFailed($"不支持的环境类型: {environmentType}");
-                        break;
-                }
+                // 使用新的Shell检测器架构
+                environmentInfo = await DetectEnvironmentInternalAsync(environmentType, forceRefresh);
             }
             catch (Exception ex)
             {
+                environmentInfo = new EnvironmentInfo(environmentType);
                 environmentInfo.SetFailed($"检测 {environmentType} 时发生异常: {ex.Message}", ex);
             }
 
@@ -149,29 +149,98 @@ namespace Occop.Core.Services.Environment
         }
 
         /// <summary>
+        /// 内部环境检测方法
+        /// </summary>
+        /// <param name="environmentType">环境类型</param>
+        /// <param name="forceRefresh">是否强制刷新</param>
+        /// <returns>环境信息</returns>
+        private async Task<EnvironmentInfo> DetectEnvironmentInternalAsync(EnvironmentType environmentType, bool forceRefresh)
+        {
+            switch (environmentType)
+            {
+                case EnvironmentType.PowerShell51:
+                    var ps51Info = await _shellDetectorManager.DetectShellAsync(ShellType.PowerShell51, forceRefresh);
+                    return ps51Info ?? new EnvironmentInfo(environmentType) { Status = DetectionStatus.Failed, ErrorMessage = "PowerShell 5.1检测失败" };
+
+                case EnvironmentType.PowerShellCore:
+                    var psCoreInfo = await _shellDetectorManager.DetectShellAsync(ShellType.PowerShellCore, forceRefresh);
+                    return psCoreInfo ?? new EnvironmentInfo(environmentType) { Status = DetectionStatus.Failed, ErrorMessage = "PowerShell Core检测失败" };
+
+                case EnvironmentType.GitBash:
+                    var gitBashInfo = await _shellDetectorManager.DetectShellAsync(ShellType.GitBash, forceRefresh);
+                    return gitBashInfo ?? new EnvironmentInfo(environmentType) { Status = DetectionStatus.Failed, ErrorMessage = "Git Bash检测失败" };
+
+                case EnvironmentType.ClaudeCode:
+                    // Claude Code暂时使用原有的检测逻辑
+                    var claudeInfo = new EnvironmentInfo(environmentType);
+                    await DetectClaudeCodeAsync(claudeInfo);
+                    return claudeInfo;
+
+                default:
+                    var unknownInfo = new EnvironmentInfo(environmentType);
+                    unknownInfo.SetFailed($"不支持的环境类型: {environmentType}");
+                    return unknownInfo;
+            }
+        }
+
+        /// <summary>
         /// 获取推荐的Shell环境（基于优先级）
         /// </summary>
         /// <returns>推荐的环境信息</returns>
         public async Task<EnvironmentInfo?> GetRecommendedShellAsync()
         {
-            var shells = new[]
+            try
             {
-                EnvironmentType.PowerShellCore,
-                EnvironmentType.PowerShell51,
-                EnvironmentType.GitBash
-            };
-
-            foreach (var shellType in shells)
-            {
-                var env = await DetectEnvironmentAsync(shellType);
-                if (env.IsAvailable)
+                // 使用ShellDetectorManager获取最优Shell
+                var optimalShell = await _shellDetectorManager.GetOptimalShellAsync();
+                if (optimalShell != null && optimalShell.IsAvailable)
                 {
-                    env.IsRecommended = true;
-                    return env;
+                    optimalShell.IsRecommended = true;
+                    return optimalShell;
                 }
-            }
 
-            return null;
+                // 如果没有找到最优Shell，按传统优先级顺序查找
+                var shells = new[]
+                {
+                    EnvironmentType.PowerShellCore,
+                    EnvironmentType.PowerShell51,
+                    EnvironmentType.GitBash
+                };
+
+                foreach (var shellType in shells)
+                {
+                    var env = await DetectEnvironmentAsync(shellType);
+                    if (env.IsAvailable)
+                    {
+                        env.IsRecommended = true;
+                        return env;
+                    }
+                }
+
+                return null;
+            }
+            catch
+            {
+                // 如果优化检测失败，回退到传统方法
+                var shells = new[]
+                {
+                    EnvironmentType.PowerShellCore,
+                    EnvironmentType.PowerShell51,
+                    EnvironmentType.GitBash
+                };
+
+                foreach (var shellType in shells)
+                {
+                    var env = await DetectEnvironmentAsync(shellType);
+                    if (env.IsAvailable)
+                    {
+                        env.IsRecommended = true;
+                        return env;
+                    }
+                }
+
+                return null;
+            }
         }
 
         /// <summary>
@@ -230,162 +299,6 @@ namespace Occop.Core.Services.Environment
         #region 私有检测方法
 
         /// <summary>
-        /// 检测PowerShell 5.1
-        /// </summary>
-        /// <param name="environmentInfo">环境信息</param>
-        private async Task DetectPowerShell51Async(EnvironmentInfo environmentInfo)
-        {
-            try
-            {
-                // 首先尝试从注册表查找PowerShell 5.1
-                var ps51Path = GetPowerShell51FromRegistry();
-                if (!string.IsNullOrEmpty(ps51Path) && File.Exists(ps51Path))
-                {
-                    var version = await GetPowerShellVersionAsync(ps51Path);
-                    if (!string.IsNullOrEmpty(version))
-                    {
-                        environmentInfo.SetDetected(Path.GetDirectoryName(ps51Path)!, ps51Path, version);
-                        environmentInfo.AddProperty("RegistrySource", true);
-                        return;
-                    }
-                }
-
-                // 尝试从PATH环境变量查找
-                var pathResult = await FindExecutableInPathAsync("powershell.exe");
-                if (pathResult.found)
-                {
-                    var version = await GetPowerShellVersionAsync(pathResult.path);
-                    if (!string.IsNullOrEmpty(version) && version.StartsWith("5."))
-                    {
-                        environmentInfo.SetDetected(Path.GetDirectoryName(pathResult.path)!, pathResult.path, version);
-                        environmentInfo.AddProperty("PathSource", true);
-                        return;
-                    }
-                }
-
-                environmentInfo.SetFailed("未找到PowerShell 5.1安装");
-            }
-            catch (Exception ex)
-            {
-                environmentInfo.SetFailed("检测PowerShell 5.1时发生异常", ex);
-            }
-        }
-
-        /// <summary>
-        /// 检测PowerShell Core
-        /// </summary>
-        /// <param name="environmentInfo">环境信息</param>
-        private async Task DetectPowerShellCoreAsync(EnvironmentInfo environmentInfo)
-        {
-            try
-            {
-                // 尝试从PATH环境变量查找pwsh.exe
-                var pathResult = await FindExecutableInPathAsync("pwsh.exe");
-                if (pathResult.found)
-                {
-                    var version = await GetPowerShellVersionAsync(pathResult.path);
-                    if (!string.IsNullOrEmpty(version))
-                    {
-                        environmentInfo.SetDetected(Path.GetDirectoryName(pathResult.path)!, pathResult.path, version);
-                        environmentInfo.AddProperty("PathSource", true);
-                        return;
-                    }
-                }
-
-                // 尝试常见安装路径
-                var commonPaths = new[]
-                {
-                    @"C:\Program Files\PowerShell\7\pwsh.exe",
-                    @"C:\Program Files\PowerShell\6\pwsh.exe",
-                    Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), @"Microsoft\powershell\pwsh.exe")
-                };
-
-                foreach (var path in commonPaths)
-                {
-                    if (File.Exists(path))
-                    {
-                        var version = await GetPowerShellVersionAsync(path);
-                        if (!string.IsNullOrEmpty(version))
-                        {
-                            environmentInfo.SetDetected(Path.GetDirectoryName(path)!, path, version);
-                            environmentInfo.AddProperty("CommonPathSource", true);
-                            return;
-                        }
-                    }
-                }
-
-                environmentInfo.SetFailed("未找到PowerShell Core安装");
-            }
-            catch (Exception ex)
-            {
-                environmentInfo.SetFailed("检测PowerShell Core时发生异常", ex);
-            }
-        }
-
-        /// <summary>
-        /// 检测Git Bash
-        /// </summary>
-        /// <param name="environmentInfo">环境信息</param>
-        private async Task DetectGitBashAsync(EnvironmentInfo environmentInfo)
-        {
-            try
-            {
-                // 尝试从PATH环境变量查找git.exe和bash.exe
-                var gitResult = await FindExecutableInPathAsync("git.exe");
-                if (gitResult.found)
-                {
-                    var gitDir = Path.GetDirectoryName(gitResult.path);
-                    var bashPath = Path.Combine(gitDir!, "..", "bin", "bash.exe");
-
-                    if (File.Exists(bashPath))
-                    {
-                        var gitVersion = await GetGitVersionAsync(gitResult.path);
-                        if (!string.IsNullOrEmpty(gitVersion))
-                        {
-                            environmentInfo.SetDetected(Path.GetDirectoryName(gitDir!)!, bashPath, gitVersion);
-                            environmentInfo.AddProperty("GitPath", gitResult.path);
-                            environmentInfo.AddProperty("BashPath", bashPath);
-                            return;
-                        }
-                    }
-                }
-
-                // 尝试常见安装路径
-                var commonPaths = new[]
-                {
-                    @"C:\Program Files\Git\bin\bash.exe",
-                    @"C:\Program Files (x86)\Git\bin\bash.exe",
-                    Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), @"Programs\Git\bin\bash.exe")
-                };
-
-                foreach (var bashPath in commonPaths)
-                {
-                    if (File.Exists(bashPath))
-                    {
-                        var gitPath = Path.Combine(Path.GetDirectoryName(bashPath)!, "git.exe");
-                        if (File.Exists(gitPath))
-                        {
-                            var gitVersion = await GetGitVersionAsync(gitPath);
-                            if (!string.IsNullOrEmpty(gitVersion))
-                            {
-                                environmentInfo.SetDetected(Path.GetDirectoryName(Path.GetDirectoryName(bashPath)!)!, bashPath, gitVersion);
-                                environmentInfo.AddProperty("GitPath", gitPath);
-                                environmentInfo.AddProperty("BashPath", bashPath);
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                environmentInfo.SetFailed("未找到Git Bash安装");
-            }
-            catch (Exception ex)
-            {
-                environmentInfo.SetFailed("检测Git Bash时发生异常", ex);
-            }
-        }
-
-        /// <summary>
         /// 检测Claude Code CLI
         /// </summary>
         /// <param name="environmentInfo">环境信息</param>
@@ -432,23 +345,6 @@ namespace Occop.Core.Services.Environment
         #region 私有辅助方法
 
         /// <summary>
-        /// 从注册表获取PowerShell 5.1路径
-        /// </summary>
-        /// <returns>PowerShell 5.1路径</returns>
-        private string? GetPowerShell51FromRegistry()
-        {
-            try
-            {
-                using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell");
-                return key?.GetValue("Path") as string;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
         /// 在PATH环境变量中查找可执行文件
         /// </summary>
         /// <param name="fileName">文件名</param>
@@ -480,71 +376,6 @@ namespace Occop.Core.Services.Environment
 
                 return (false, string.Empty);
             });
-        }
-
-        /// <summary>
-        /// 获取PowerShell版本
-        /// </summary>
-        /// <param name="powershellPath">PowerShell可执行文件路径</param>
-        /// <returns>版本字符串</returns>
-        private async Task<string?> GetPowerShellVersionAsync(string powershellPath)
-        {
-            try
-            {
-                using var process = new Process();
-                process.StartInfo.FileName = powershellPath;
-                process.StartInfo.Arguments = "-NoProfile -Command \"$PSVersionTable.PSVersion.ToString()\"";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.CreateNoWindow = true;
-
-                process.Start();
-                var output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-
-                return process.ExitCode == 0 ? output.Trim() : null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// 获取Git版本
-        /// </summary>
-        /// <param name="gitPath">Git可执行文件路径</param>
-        /// <returns>版本字符串</returns>
-        private async Task<string?> GetGitVersionAsync(string gitPath)
-        {
-            try
-            {
-                using var process = new Process();
-                process.StartInfo.FileName = gitPath;
-                process.StartInfo.Arguments = "--version";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.CreateNoWindow = true;
-
-                process.Start();
-                var output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-
-                if (process.ExitCode == 0)
-                {
-                    // 从"git version 2.34.1.windows.1"中提取版本号
-                    var match = System.Text.RegularExpressions.Regex.Match(output, @"git version (\d+\.\d+\.\d+)");
-                    return match.Success ? match.Groups[1].Value : output.Trim();
-                }
-
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         /// <summary>
