@@ -9,7 +9,7 @@ created: 2025-09-17T03:00:32Z
 
 ## 执行概要
 
-occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工具，旨在解决在不安全环境中使用AI编程工具时的敏感信息泄露风险。该工具通过GitHub身份验证、自动环境配置、临时凭证管理和会话后清理，确保用户能够安全地在任何环境中使用Claude Code和OpenAI Codex CLI。
+occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工具，旨在解决在不安全环境中使用AI编程工具时的敏感信息泄露风险。该工具通过GitHub身份验证、自动环境配置、临时凭证管理和会话后清理，确保用户能够安全地在任何环境中使用Claude Code。
 
 ## 问题陈述
 
@@ -35,7 +35,7 @@ occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工�
 1. **启动阶段**：在网吧打开occop工具
 2. **身份验证**：通过GitHub账户验证身份
 3. **自动配置**：工具自动检测环境并配置AI工具
-4. **安全使用**：通过工具安全调用Claude Code或OpenAI Codex CLI
+4. **安全使用**：通过工具安全调用Claude Code
 5. **自动清理**：AI工具退出后自动清理所有敏感信息
 
 ### 痛点
@@ -55,19 +55,16 @@ occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工�
 #### 2. 环境检测和选择
 - **Shell环境检测**：自动检测PowerShell和Git Bash安装情况
 - **优先级选择**：PowerShell最新版本 > Git Bash
-- **AI工具检测**：检测Claude Code和OpenAI Codex CLI安装状态
+- **AI工具检测**：检测Claude Code安装状态
 
 #### 3. 自动配置管理
 - **Claude Code配置**：
   - 临时设置环境变量：`ANTHROPIC_AUTH_TOKEN`和`ANTHROPIC_BASE_URL`
   - 会话结束后自动清理环境变量
-- **OpenAI Codex CLI配置**：
-  - 在`%USERPROFILE%\.codex\`创建`config.toml`和`auth.json`
-  - 会话结束后彻底删除配置文件
 
 #### 4. 进程监控和清理
-- **AI工具进程监控**：实时监控调用的AI工具进程状态
-- **自动清理机制**：AI工具退出后立即清理所有敏感信息
+- **Claude Code进程监控**：实时监控调用的Claude Code进程状态
+- **自动清理机制**：Claude Code退出后立即清理所有敏感信息
 - **异常处理清理**：程序异常退出时确保敏感信息被清理
 
 #### 5. 日志记录
@@ -110,9 +107,8 @@ occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工�
 - [ ] 成功通过GitHub身份验证
 - [ ] 正确检测和选择Shell环境
 - [ ] 自动配置Claude Code环境变量
-- [ ] 自动创建OpenAI Codex CLI配置文件
-- [ ] 实时监控AI工具进程状态
-- [ ] AI工具退出后完整清理敏感信息
+- [ ] 实时监控Claude Code进程状态
+- [ ] Claude Code退出后完整清理敏感信息
 - [ ] 程序异常退出时触发清理机制
 - [ ] 生成完整的操作日志
 
@@ -120,12 +116,12 @@ occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工�
 
 ### 技术约束
 - **平台限制**：仅支持Windows平台
-- **依赖工具**：需要Claude Code或OpenAI Codex CLI预先安装
+- **依赖工具**：需要Claude Code预先安装
 - **网络要求**：需要互联网连接进行GitHub身份验证
 
 ### 假设
 - 用户已有有效的GitHub账户
-- 用户已安装Claude Code或OpenAI Codex CLI
+- 用户已安装Claude Code
 - 用户有PowerShell或Git Bash环境
 - 网络环境允许访问GitHub和AI服务
 
@@ -141,7 +137,7 @@ occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工�
 - API密钥存储和管理
 - 多用户权限管理
 - 自定义配置预设
-- AI工具的安装和更新
+- Claude Code的安装和更新
 - 网络代理配置
 - 备份和恢复功能
 
@@ -149,13 +145,12 @@ occop 是一个专为公共环境（如网吧）设计的Windows桌面安全工�
 
 ### 外部依赖
 - **GitHub API**：用于身份验证
-- **Claude Code CLI**：目标AI工具之一
-- **OpenAI Codex CLI**：目标AI工具之二
+- **Claude Code CLI**：目标AI工具
 - **Windows API**：进程管理和环境变量操作
 
 ### 内部依赖
 - 身份验证模块必须在配置模块之前完成
-- 环境检测必须在AI工具调用之前完成
+- 环境检测必须在Claude Code调用之前完成
 - 清理模块依赖于进程监控模块的状态反馈
 
 ## 实现计划
