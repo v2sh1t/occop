@@ -34,8 +34,26 @@ namespace Occop.UI
                 // Start the host
                 _host.Start();
 
+                // Check if authentication is required on startup
+                var authManager = _host.Services.GetRequiredService<AuthenticationManager>();
+
+                if (!authManager.IsAuthenticated)
+                {
+                    // Show login window first
+                    var loginWindow = _host.Services.GetRequiredService<LoginWindow>();
+                    var loginResult = loginWindow.ShowLoginDialog();
+
+                    if (!loginResult)
+                    {
+                        // User cancelled login, exit application
+                        Shutdown(0);
+                        return;
+                    }
+                }
+
                 // Create and show main window
                 var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+                MainWindow = mainWindow;
                 mainWindow.Show();
 
                 base.OnStartup(e);
@@ -113,9 +131,12 @@ namespace Occop.UI
 
                     // ViewModels
                     services.AddTransient<AuthenticationViewModel>();
+                    services.AddTransient<LoginViewModel>();
+                    services.AddTransient<MainViewModel>();
 
-                    // Views
+                    // Views and Windows
                     services.AddTransient<AuthenticationView>();
+                    services.AddTransient<LoginWindow>();
                     services.AddSingleton<MainWindow>();
                 })
                 .UseConsoleLifetime()

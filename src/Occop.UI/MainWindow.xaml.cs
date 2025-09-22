@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Occop.UI.ViewModels;
+using System.ComponentModel;
 using System.Windows;
 
 namespace Occop.UI
@@ -10,45 +12,37 @@ namespace Occop.UI
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<MainWindow> _logger;
+        private readonly MainViewModel _viewModel;
 
-        public MainWindow(IServiceProvider serviceProvider)
+        public MainWindow(ILogger<MainWindow> logger, MainViewModel viewModel)
         {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-
             InitializeComponent();
-            InitializeViewModel();
+
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+
+            // Set the DataContext
+            DataContext = _viewModel;
+
+            _logger.LogInformation("MainWindow initialized");
         }
 
-        private void InitializeViewModel()
+        protected override void OnClosing(CancelEventArgs e)
         {
             try
             {
-                // Get the AuthenticationViewModel from DI container
-                var authenticationViewModel = _serviceProvider.GetRequiredService<AuthenticationViewModel>();
+                _logger.LogInformation("MainWindow closing");
 
-                // Set the DataContext for the AuthenticationView
-                AuthenticationView.DataContext = authenticationViewModel;
+                // Dispose of ViewModel
+                _viewModel?.Dispose();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"初始化视图模型时发生错误：{ex.Message}",
-                    "初始化错误",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            // Clean up ViewModel when window closes
-            if (AuthenticationView.DataContext is IDisposable disposableViewModel)
-            {
-                disposableViewModel.Dispose();
+                _logger.LogError(ex, "Error during MainWindow closing");
             }
 
-            base.OnClosed(e);
+            base.OnClosing(e);
         }
     }
 }
