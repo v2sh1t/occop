@@ -3,6 +3,7 @@ using Microsoft.Toolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Occop.Core.Authentication;
+using Occop.Services;
 using System.Windows.Input;
 using System.ComponentModel;
 using System.Windows.Media;
@@ -19,6 +20,7 @@ namespace Occop.UI.ViewModels
         private readonly AuthenticationManager _authenticationManager;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<MainViewModel> _logger;
+        private readonly ITrayManager? _trayManager;
         private bool _disposed = false;
 
         [ObservableProperty]
@@ -66,6 +68,9 @@ namespace Occop.UI.ViewModels
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+            // Try to get TrayManager (optional dependency)
+            _trayManager = _serviceProvider.GetService<ITrayManager>();
+
             // Subscribe to authentication events
             _authenticationManager.AuthenticationStateChanged += OnAuthenticationStateChanged;
             _authenticationManager.AuthenticationFailed += OnAuthenticationFailed;
@@ -82,6 +87,7 @@ namespace Occop.UI.ViewModels
             UpdateAuthenticationState();
             UpdateToolsStatus();
             UpdateCleanupStatus();
+            UpdateTrayStatus();
 
             _logger.LogInformation("MainViewModel initialized");
         }
@@ -289,6 +295,45 @@ namespace Occop.UI.ViewModels
             LastCleanupInfo = "尚未执行过清理操作";
         }
 
+        private void UpdateTrayStatus()
+        {
+            try
+            {
+                if (_trayManager == null) return;
+
+                // Determine tray status based on current application state
+                TrayStatus status = TrayStatus.Idle;
+
+                if (_authenticationManager.IsAuthenticated)
+                {
+                    // Check if tools are connected/working
+                    if (ClaudeStatusText == "已连接" || ClaudeStatusText == "工作中")
+                    {
+                        status = TrayStatus.Working;
+                    }
+                    else if (ClaudeStatusText == "离线" || ClaudeStatusText == "未连接")
+                    {
+                        status = TrayStatus.Disconnected;
+                    }
+                    else
+                    {
+                        status = TrayStatus.Ready;
+                    }
+                }
+                else
+                {
+                    status = TrayStatus.Disconnected;
+                }
+
+                _trayManager.UpdateStatus(status);
+                _logger.LogDebug("Tray status updated to: {Status}", status);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to update tray status");
+            }
+        }
+
         #endregion
 
         #region Event Handlers
@@ -299,11 +344,13 @@ namespace Occop.UI.ViewModels
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 UpdateAuthenticationState();
+                UpdateTrayStatus();
 
                 switch (e.NewState)
                 {
                     case AuthenticationState.Authenticated:
                         StatusMessage = $"欢迎，{UserDisplayName}！";
+                        _trayManager?.ShowBalloonTip("Occop", $"用户 {UserDisplayName} 已登录", System.Windows.Forms.ToolTipIcon.Info);
                         break;
 
                     case AuthenticationState.NotAuthenticated:
@@ -316,6 +363,7 @@ namespace Occop.UI.ViewModels
 
                     case AuthenticationState.LockedOut:
                         StatusMessage = "账户已被锁定";
+                        _trayManager?.ShowBalloonTip("Occop", "账户已被锁定", System.Windows.Forms.ToolTipIcon.Warning);
                         break;
                 }
 
@@ -330,6 +378,8 @@ namespace Occop.UI.ViewModels
             {
                 StatusMessage = $"认证失败：{e.Reason}";
                 UpdateAuthenticationState();
+                UpdateTrayStatus();
+                _trayManager?.ShowBalloonTip("Occop", $"认证失败：{e.Reason}", System.Windows.Forms.ToolTipIcon.Error);
             });
         }
 
@@ -339,6 +389,8 @@ namespace Occop.UI.ViewModels
             {
                 StatusMessage = "会话已过期，请重新认证";
                 UpdateAuthenticationState();
+                UpdateTrayStatus();
+                _trayManager?.ShowBalloonTip("Occop", "会话已过期，请重新认证", System.Windows.Forms.ToolTipIcon.Warning);
             });
         }
 

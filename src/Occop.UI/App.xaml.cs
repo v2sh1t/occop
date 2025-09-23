@@ -6,6 +6,7 @@ using NLog.Extensions.Logging;
 using Occop.Core.Authentication;
 using Occop.Core.Security;
 using Occop.Services.Authentication;
+using Occop.Services;
 using Occop.UI.ViewModels;
 using Occop.UI.Views;
 using System.IO;
@@ -128,6 +129,9 @@ namespace Occop.UI
                     // OAuth Services
                     services.AddSingleton<OAuthDeviceFlow>();
                     services.AddSingleton<GitHubAuthService>();
+
+                    // UI Services
+                    services.AddSingleton<ITrayManager, TrayManager>();
 
                     // ViewModels
                     services.AddTransient<AuthenticationViewModel>();
