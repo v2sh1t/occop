@@ -59,6 +59,9 @@ namespace Occop.UI.ViewModels
         [ObservableProperty]
         private string _applicationVersion = "";
 
+        [ObservableProperty]
+        private StatusViewModel? _statusViewModel;
+
         public MainViewModel(
             AuthenticationManager authenticationManager,
             IServiceProvider serviceProvider,

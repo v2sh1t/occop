@@ -9,6 +9,7 @@ using Occop.Services.Authentication;
 using Occop.Services;
 using Occop.UI.ViewModels;
 using Occop.UI.Views;
+using Occop.UI.Services;
 using System.IO;
 using System.Windows;
 
@@ -132,11 +133,13 @@ namespace Occop.UI
 
                     // UI Services
                     services.AddSingleton<ITrayManager, TrayManager>();
+                    services.AddSingleton<INotificationManager, NotificationManager>();
 
                     // ViewModels
                     services.AddTransient<AuthenticationViewModel>();
                     services.AddTransient<LoginViewModel>();
                     services.AddTransient<MainViewModel>();
+                    services.AddTransient<StatusViewModel>();
 
                     // Views and Windows
                     services.AddTransient<AuthenticationView>();

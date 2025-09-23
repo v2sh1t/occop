@@ -5,6 +5,7 @@ using Occop.Services;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
+using System;
 
 namespace Occop.UI
 {
@@ -16,18 +17,23 @@ namespace Occop.UI
     {
         private readonly ILogger<MainWindow> _logger;
         private readonly MainViewModel _viewModel;
+        private readonly StatusViewModel _statusViewModel;
         private readonly ITrayManager _trayManager;
 
-        public MainWindow(ILogger<MainWindow> logger, MainViewModel viewModel, ITrayManager trayManager)
+        public MainWindow(ILogger<MainWindow> logger, MainViewModel viewModel, StatusViewModel statusViewModel, ITrayManager trayManager)
         {
             InitializeComponent();
 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+            _statusViewModel = statusViewModel ?? throw new ArgumentNullException(nameof(statusViewModel));
             _trayManager = trayManager ?? throw new ArgumentNullException(nameof(trayManager));
 
             // Set the DataContext
             DataContext = _viewModel;
+
+            // Add StatusViewModel to the main ViewModel
+            _viewModel.StatusViewModel = _statusViewModel;
 
             // Initialize tray manager
             InitializeTrayManager();
