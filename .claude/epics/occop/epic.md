@@ -2,16 +2,16 @@
 name: occop
 status: backlog
 created: 2025-09-16T19:07:09Z
-progress: 0%
+progress: 20%
 prd: .claude/prds/occop.md
-github: [Will be updated when synced to GitHub]
+github: https://github.com/v2sh1t/occop/issues/1
 ---
 
 # Epic: occop
 
 ## 概述
 
-occop是一个Windows桌面安全工具，专为在公共环境（如网吧）中安全使用AI编程工具而设计。该工具通过自动化配置管理、进程监控和敏感信息清理，确保用户能够在不安全环境中安全地使用Claude Code和OpenAI Codex CLI，同时防止API密钥泄露。
+occop是一个Windows桌面安全工具，专为在公共环境（如网吧）中安全使用Claude Code而设计。该工具通过自动化配置管理、进程监控和敏感信息清理，确保用户能够在不安全环境中安全地使用Claude Code，同时防止API密钥泄露。
 
 ## 架构决策
 
@@ -34,9 +34,9 @@ occop是一个Windows桌面安全工具，专为在公共环境（如网吧）�
 - **审计日志**：记录所有关键操作（不包含敏感信息）
 
 ### 设计模式
-- **命令模式**：用于AI工具调用和配置管理
+- **命令模式**：用于Claude Code调用和配置管理
 - **观察者模式**：用于进程监控和状态通知
-- **策略模式**：用于不同AI工具的配置策略
+- **策略模式**：用于Claude Code的配置策略
 - **单例模式**：用于安全管理器和日志记录器
 
 ## 技术方法
@@ -64,12 +64,11 @@ occop是一个Windows桌面安全工具，专为在公共环境（如网吧）�
   - 扫描系统PATH和注册表
   - 版本检测和优先级排序
   - PowerShell > Git Bash的选择逻辑
-- **AI工具检测**：
+- **Claude Code检测**：
   - 命令行可用性测试
   - 版本兼容性检查
 - **动态配置管理**：
   - 临时环境变量设置（Claude Code）
-  - 配置文件创建/删除（OpenAI Codex CLI）
 
 ### 进程监控系统
 - **实时进程监控**：
@@ -77,7 +76,7 @@ occop是一个Windows桌面安全工具，专为在公共环境（如网吧）�
   - 进程树跟踪，监控子进程
   - 异常退出检测
 - **自动清理机制**：
-  - AI工具进程退出时立即触发
+  - Claude Code进程退出时立即触发
   - 程序异常退出时通过finalizer触发
   - 系统关机时的清理钩子
 
@@ -110,22 +109,20 @@ occop是一个Windows桌面安全工具，专为在公共环境（如网吧）�
 - **压力测试**：长时间运行和异常情况测试
 
 ## 任务已创建
-
-- [ ] 001.md - 项目搭建和核心架构设计 (parallel: true)
-- [ ] 002.md - GitHub OAuth认证系统 (parallel: false)
-- [ ] 003.md - 环境检测引擎 (parallel: true)
-- [ ] 004.md - AI工具配置管理器 (parallel: false)
-- [ ] 005.md - 进程监控系统 (parallel: false)
-- [ ] 006.md - 安全管理器和清理机制 (parallel: false)
-- [ ] 007.md - 用户界面和系统托盘 (parallel: true)
-- [ ] 008.md - 日志系统和集成测试 (parallel: false)
+- [ ] #2 - 项目搭建和核心架构设计 (parallel: true)
+- [ ] #3 - GitHub OAuth认证系统 (parallel: false)
+- [ ] #4 - 环境检测引擎 (parallel: true)
+- [ ] #5 - Claude Code配置管理器 (parallel: false)
+- [ ] #6 - 进程监控系统 (parallel: false)
+- [ ] #7 - 安全管理器和清理机制 (parallel: false)
+- [ ] #8 - 用户界面和系统托盘 (parallel: true)
+- [ ] #9 - 日志系统和集成测试 (parallel: false)
 
 **任务统计：**
 - 总任务数：8
-- 并行任务：3 (001, 003, 007)
-- 顺序任务：5 (002, 004, 005, 006, 008)
+- 并行任务：3 (2, 4, 8)
+- 顺序任务：5 (3, 5, 6, 7, 9)
 - 预估总工作量：160小时 (20工作日)
-
 ## 依赖关系
 
 ### 外部依赖
@@ -133,7 +130,6 @@ occop是一个Windows桌面安全工具，专为在公共环境（如网吧）�
 - **GitHub API**：OAuth认证和用户验证
 - **Windows API**：进程管理、环境变量、注册表访问
 - **Claude Code CLI**：目标AI工具（用户预装）
-- **OpenAI Codex CLI**：目标AI工具（用户预装）
 
 ### 内部依赖
 - 认证系统 → 配置管理器（认证成功后才能配置）
@@ -159,7 +155,7 @@ occop是一个Windows桌面安全工具，专为在公共环境（如网吧）�
 ### 验收标准
 - [ ] GitHub OAuth认证成功率 > 95%
 - [ ] 环境检测准确率 = 100%
-- [ ] AI工具配置成功率 > 99%
+- [ ] Claude Code配置成功率 > 99%
 - [ ] 进程监控响应时间 < 1秒
 - [ ] 敏感信息清理成功率 = 100%
 - [ ] 异常退出时清理成功率 > 95%
@@ -176,7 +172,7 @@ occop是一个Windows桌面安全工具，专为在公共环境（如网吧）�
 ### 资源要求
 - **开发人员**：1名C#/.NET开发者
 - **测试环境**：Windows 10/11测试机
-- **工具需求**：Visual Studio、Git、AI工具测试环境
+- **工具需求**：Visual Studio、Git、Claude Code测试环境
 
 ### 关键路径项目
 1. GitHub OAuth集成（依赖外部API）

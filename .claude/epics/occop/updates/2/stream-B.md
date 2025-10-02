@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 stream: MVVM架构基础 (Stream B)
 agent: claude-code
 started: 2025-09-17T03:55:00Z
@@ -101,3 +102,25 @@ src/
 ```
 
 **总计**: 4个文件，920+行高质量C#代码，构建了完整的MVVM架构基础设施。
+=======
+issue: 2
+stream: MVVM架构基础
+agent: general-purpose
+started: 2025-09-16T19:40:55Z
+status: waiting
+---
+
+# Stream B: MVVM架构基础
+
+## Scope
+实现BaseViewModel基类，创建RelayCommand和AsyncRelayCommand，建立属性变更通知机制，创建MVVM基础设施。
+
+## Files
+- `/src/Occop.UI/ViewModels/BaseViewModel.cs`
+- `/src/Occop.UI/Commands/RelayCommand.cs`
+- `/src/Occop.UI/Commands/AsyncRelayCommand.cs`
+- `/src/Occop.Core/Common/INotifyPropertyChanged.cs`
+
+## Progress
+- Waiting for project structure completion
+>>>>>>> main

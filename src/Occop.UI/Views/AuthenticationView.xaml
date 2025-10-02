@@ -1,0 +1,342 @@
+<UserControl x:Class="Occop.UI.Views.AuthenticationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:Occop.UI.Controls"
+             xmlns:viewmodels="clr-namespace:Occop.UI.ViewModels"
+             xmlns:converters="clr-namespace:Occop.UI.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800"
+             d:DataContext="{d:DesignInstance Type=viewmodels:AuthenticationViewModel}">
+
+    <UserControl.Resources>
+        <!-- 样式定义 -->
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#34495E"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="BodyTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="20"/>
+        </Style>
+
+        <Style x:Key="StatusTextStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextStyle}">
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Foreground" Value="#7F8C8D"/>
+        </Style>
+
+        <Style x:Key="ErrorTextStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextStyle}">
+            <Setter Property="Foreground" Value="#E74C3C"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style x:Key="CodeTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas, Monaco, 'Courier New', monospace"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Background" Value="#ECF0F1"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#BDC3C7"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2980B9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#21618C"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#BDC3C7"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="#95A5A6"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#7F8C8D"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#626567"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="LinkButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#3498DB"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="5,2"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#2980B9"/>
+                                <Setter Property="TextBlock.TextDecorations" Value="Underline"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DeviceCodeControl默认样式 -->
+        <Style TargetType="controls:DeviceCodeControl">
+            <Setter Property="Margin" Value="0,20"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Background" Value="#F8F9FA"/>
+            <Setter Property="BorderBrush" Value="#DEE2E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="controls:DeviceCodeControl">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <StackPanel>
+                                <!-- 用户码显示 -->
+                                <StackPanel Visibility="{Binding UserCode, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static converters:StringToVisibilityConverter.Instance}}">
+                                    <TextBlock Text="验证码" Style="{StaticResource SubHeaderTextStyle}"/>
+                                    <Border Background="White"
+                                            BorderBrush="#BDC3C7"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Margin="0,5,0,10">
+                                        <TextBlock Text="{Binding UserCode, RelativeSource={RelativeSource TemplatedParent}}"
+                                                   Style="{StaticResource CodeTextStyle}"
+                                                   Background="Transparent"
+                                                   BorderThickness="0"/>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                        <Button Content="复制验证码"
+                                                Style="{StaticResource LinkButtonStyle}"
+                                                Command="{Binding CopyUserCodeCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                CommandParameter="{Binding UserCode, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- 验证URL -->
+                                <StackPanel Visibility="{Binding VerificationUrl, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static converters:StringToVisibilityConverter.Instance}}">
+                                    <TextBlock Text="验证地址" Style="{StaticResource SubHeaderTextStyle}"/>
+                                    <TextBlock Text="{Binding VerificationUrl, RelativeSource={RelativeSource TemplatedParent}}"
+                                               Style="{StaticResource BodyTextStyle}"
+                                               Margin="0,5,0,10"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="在浏览器中打开"
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                Command="{Binding OpenUrlCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                CommandParameter="{Binding VerificationUrl, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                        <Button Content="复制地址"
+                                                Style="{StaticResource LinkButtonStyle}"
+                                                Command="{Binding CopyUrlCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                CommandParameter="{Binding VerificationUrl, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 头部 -->
+        <StackPanel Grid.Row="0" Margin="40,40,40,20">
+            <TextBlock Text="GitHub OAuth 认证" Style="{StaticResource HeaderTextStyle}"/>
+            <TextBlock Text="请使用您的GitHub账号进行认证以使用此应用程序"
+                       Style="{StaticResource BodyTextStyle}"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- 主要内容区域 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="40,0">
+            <StackPanel MaxWidth="600">
+
+                <!-- 未认证状态 -->
+                <StackPanel Visibility="{Binding IsAuthenticated, Converter={x:Static converters:BooleanToVisibilityConverter.Inverse}}">
+
+                    <!-- 认证说明 -->
+                    <Border Background="#E8F4FD"
+                            BorderBrush="#3498DB"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="15"
+                            Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="为什么需要认证？" Style="{StaticResource SubHeaderTextStyle}"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}">
+                                此应用程序需要您的GitHub身份验证以确保安全访问。我们使用OAuth设备流程，这是一种安全的认证方式，不会存储您的密码。
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 开始认证按钮 -->
+                    <Button Content="开始GitHub认证"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding StartAuthenticationCommand}"
+                            IsEnabled="{Binding IsAuthenticating, Converter={x:Static converters:BooleanConverter.Inverse}}"
+                            Visibility="{Binding IsAuthenticating, Converter={x:Static converters:BooleanToVisibilityConverter.Inverse}}"
+                            HorizontalAlignment="Center"
+                            FontSize="16"
+                            Padding="30,12"/>
+
+                    <!-- 认证进行中状态 -->
+                    <StackPanel Visibility="{Binding IsAuthenticating, Converter={x:Static converters:BooleanToVisibilityConverter.Instance}}">
+
+                        <!-- 进度显示 -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="{Binding AuthenticationProgressText}"
+                                       Style="{StaticResource StatusTextStyle}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,10"/>
+                            <ProgressBar Value="{Binding AuthenticationProgress}"
+                                         Maximum="100"
+                                         Height="8"
+                                         Background="#ECF0F1"
+                                         Foreground="#3498DB"/>
+                        </StackPanel>
+
+                        <!-- 设备码控件 -->
+                        <controls:DeviceCodeControl
+                            UserCode="{Binding UserCode}"
+                            DeviceCode="{Binding DeviceCode}"
+                            VerificationUrl="{Binding VerificationUrl}"
+                            IsVisible="{Binding UserCode, Converter={x:Static converters:StringToBooleanConverter.Instance}}"
+                            CopyUserCodeCommand="{Binding CopyUserCodeCommand}"
+                            CopyDeviceCodeCommand="{Binding CopyDeviceCodeCommand}"
+                            CopyUrlCommand="{Binding CopyVerificationUrlCommand}"
+                            OpenUrlCommand="{Binding OpenVerificationUrlCommand}"/>
+
+                        <!-- 取消按钮 -->
+                        <Button Content="取消认证"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding CancelAuthenticationCommand}"
+                                HorizontalAlignment="Center"
+                                Margin="0,20,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- 已认证状态 -->
+                <StackPanel Visibility="{Binding IsAuthenticated, Converter={x:Static converters:BooleanToVisibilityConverter.Instance}}">
+                    <Border Background="#D5EDDA"
+                            BorderBrush="#28A745"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="20"
+                            Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="✓ 认证成功"
+                                       Style="{StaticResource SubHeaderTextStyle}"
+                                       Foreground="#155724"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}"
+                                       Foreground="#155724"
+                                       HorizontalAlignment="Center">
+                                <Run Text="欢迎，"/>
+                                <Run Text="{Binding CurrentUserLogin}" FontWeight="SemiBold"/>
+                                <Run Text="！您已成功认证。"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Button Content="注销"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding SignOutCommand}"
+                            HorizontalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 底部状态栏 -->
+        <Border Grid.Row="2"
+                Background="#F8F9FA"
+                BorderBrush="#DEE2E6"
+                BorderThickness="0,1,0,0"
+                Padding="20,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 状态消息 -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="状态：" Style="{StaticResource BodyTextStyle}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               Style="{StaticResource StatusTextStyle}"
+                               Margin="5,0,0,0"/>
+                </StackPanel>
+
+                <!-- 错误消息 -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Visibility="{Binding HasError, Converter={x:Static converters:BooleanToVisibilityConverter.Instance}}">
+                    <TextBlock Text="⚠ "
+                               Style="{StaticResource ErrorTextStyle}"
+                               FontSize="16"/>
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Style="{StaticResource ErrorTextStyle}"
+                               MaxWidth="300"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
