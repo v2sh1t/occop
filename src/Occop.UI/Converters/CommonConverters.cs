@@ -103,4 +103,27 @@ namespace Occop.UI.Converters
             return false;
         }
     }
+
+    /// <summary>
+    /// Converts count to Visibility (visible if count > 0)
+    /// 数量到可见性转换器（数量大于0时可见）
+    /// </summary>
+    public class CountToVisibilityConverter : IValueConverter
+    {
+        public static readonly CountToVisibilityConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int count)
+            {
+                return count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

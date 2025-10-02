@@ -178,10 +178,24 @@ namespace Occop.UI.ViewModels
             try
             {
                 _logger.LogInformation("Opening settings");
-                StatusMessage = "设置界面即将推出...";
 
-                // TODO: Implement settings window
-                await Task.Delay(100); // Placeholder
+                var settingsWindow = _serviceProvider.GetRequiredService<SettingsWindow>();
+                var currentWindow = System.Windows.Application.Current.MainWindow;
+
+                var settingsResult = settingsWindow.ShowSettingsDialog(currentWindow);
+
+                if (settingsResult)
+                {
+                    _logger.LogInformation("Settings saved successfully");
+                    StatusMessage = "设置已保存";
+                }
+                else
+                {
+                    _logger.LogInformation("Settings cancelled or closed");
+                    StatusMessage = "设置已取消";
+                }
+
+                await Task.CompletedTask;
             }
             catch (Exception ex)
             {

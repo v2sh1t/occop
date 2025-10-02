@@ -134,16 +134,19 @@ namespace Occop.UI
                     // UI Services
                     services.AddSingleton<ITrayManager, TrayManager>();
                     services.AddSingleton<INotificationManager, NotificationManager>();
+                    services.AddSingleton<ISettingsManager, SettingsManager>();
 
                     // ViewModels
                     services.AddTransient<AuthenticationViewModel>();
                     services.AddTransient<LoginViewModel>();
                     services.AddTransient<MainViewModel>();
                     services.AddTransient<StatusViewModel>();
+                    services.AddTransient<SettingsViewModel>();
 
                     // Views and Windows
                     services.AddTransient<AuthenticationView>();
                     services.AddTransient<LoginWindow>();
+                    services.AddTransient<SettingsWindow>();
                     services.AddSingleton<MainWindow>();
                 })
                 .UseConsoleLifetime()
