@@ -325,6 +325,279 @@ public class LongRunningStabilityTests : IClassFixture<IntegrationTestContext>
     }
 
     /// <summary>
+    /// 资源清理测试 - 验证资源正确释放
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Stability")]
+    [Trait("Duration", "Short")]
+    public async Task RepeatedResourceAllocation_ShouldClean_ProperlyAsync()
+    {
+        var iterations = 500;
+        var monitor = new PerformanceMonitor(_context.LoggerFactory.CreateLogger<PerformanceMonitor>());
+
+        var initialHandleCount = System.Diagnostics.Process.GetCurrentProcess().HandleCount;
+        var initialThreadCount = System.Diagnostics.Process.GetCurrentProcess().Threads.Count;
+
+        _logger.LogInformation("初始句柄数: {Handles}, 初始线程数: {Threads}",
+            initialHandleCount, initialThreadCount);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            var authManager = new AuthenticationManager(
+                _context.LoggerFactory.CreateLogger<AuthenticationManager>()
+            );
+
+            await authManager.InitializeAsync();
+            authManager.Dispose();
+
+            if (i % 100 == 0)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+        }
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        await Task.Delay(1000); // 等待清理完成
+
+        var finalHandleCount = System.Diagnostics.Process.GetCurrentProcess().HandleCount;
+        var finalThreadCount = System.Diagnostics.Process.GetCurrentProcess().Threads.Count;
+
+        _logger.LogInformation("最终句柄数: {Handles}, 最终线程数: {Threads}",
+            finalHandleCount, finalThreadCount);
+
+        var handleIncrease = finalHandleCount - initialHandleCount;
+        var threadIncrease = finalThreadCount - initialThreadCount;
+
+        _logger.LogInformation("句柄增长: {Handles}, 线程增长: {Threads}",
+            handleIncrease, threadIncrease);
+
+        // 句柄和线程数不应显著增长
+        handleIncrease.Should().BeLessThan(50, "句柄泄漏检测");
+        threadIncrease.Should().BeLessThan(10, "线程泄漏检测");
+    }
+
+    /// <summary>
+    /// 异常恢复测试 - 验证系统从异常中恢复
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Stability")]
+    [Trait("Duration", "Short")]
+    public async Task System_Should_RecoverFrom_Exceptions()
+    {
+        var successCount = 0;
+        var failureCount = 0;
+        var recoveryCount = 0;
+
+        var monitor = new PerformanceMonitor(_context.LoggerFactory.CreateLogger<PerformanceMonitor>());
+
+        for (int i = 0; i < 100; i++)
+        {
+            try
+            {
+                if (i % 10 == 5) // 模拟周期性故障
+                {
+                    throw new InvalidOperationException("模拟故障");
+                }
+
+                await PerformTypicalOperationsAsync(monitor);
+
+                if (failureCount > 0 && successCount > failureCount)
+                {
+                    recoveryCount++;
+                }
+
+                successCount++;
+            }
+            catch (InvalidOperationException)
+            {
+                failureCount++;
+
+                // 等待后重试
+                await Task.Delay(100);
+            }
+        }
+
+        _logger.LogInformation("成功: {Success}, 失败: {Failure}, 恢复: {Recovery}",
+            successCount, failureCount, recoveryCount);
+
+        successCount.Should().BeGreaterThan(failureCount, "系统应该能够从故障中恢复");
+        recoveryCount.Should().BeGreaterThan(0, "应该观察到至少一次恢复");
+    }
+
+    /// <summary>
+    /// 并发压力测试 - 验证系统在高并发下的稳定性
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Stability")]
+    [Trait("Duration", "Medium")]
+    public async Task System_Should_HandleHighConcurrency_Stably()
+    {
+        var concurrentTasks = 50;
+        var operationsPerTask = 20;
+        var monitor = new PerformanceMonitor(_context.LoggerFactory.CreateLogger<PerformanceMonitor>());
+
+        var successCounts = new int[concurrentTasks];
+        var failureCounts = new int[concurrentTasks];
+
+        _logger.LogInformation("开始并发压力测试: {Tasks} 任务, 每任务 {Operations} 操作",
+            concurrentTasks, operationsPerTask);
+
+        var startTime = DateTime.Now;
+
+        var tasks = Enumerable.Range(0, concurrentTasks).Select(async taskId =>
+        {
+            for (int i = 0; i < operationsPerTask; i++)
+            {
+                try
+                {
+                    await PerformTypicalOperationsAsync(monitor);
+                    Interlocked.Increment(ref successCounts[taskId]);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "任务 {TaskId} 操作失败", taskId);
+                    Interlocked.Increment(ref failureCounts[taskId]);
+                }
+            }
+        }).ToArray();
+
+        await Task.WhenAll(tasks);
+
+        var elapsed = DateTime.Now - startTime;
+        var totalSuccess = successCounts.Sum();
+        var totalFailure = failureCounts.Sum();
+        var totalOperations = totalSuccess + totalFailure;
+
+        _logger.LogInformation("并发测试完成");
+        _logger.LogInformation("耗时: {Elapsed}", elapsed);
+        _logger.LogInformation("总操作: {Total}, 成功: {Success}, 失败: {Failure}",
+            totalOperations, totalSuccess, totalFailure);
+        _logger.LogInformation("吞吐量: {Throughput:F2} 操作/秒",
+            totalOperations / elapsed.TotalSeconds);
+
+        // 验证
+        totalSuccess.Should().BeGreaterThan(0, "应该有成功的操作");
+        var errorRate = totalFailure / (double)totalOperations;
+        errorRate.Should().BeLessThan(0.05, "错误率应低于5%");
+    }
+
+    /// <summary>
+    /// 数据一致性测试 - 验证并发操作的数据一致性
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Stability")]
+    [Trait("Duration", "Short")]
+    public async Task ConcurrentOperations_Should_MaintainDataConsistency()
+    {
+        var securityManager = _context.GetService<ISecurityManager>();
+        await securityManager.InitializeAsync();
+
+        var concurrentWrites = 20;
+        var dataIds = new System.Collections.Concurrent.ConcurrentBag<string>();
+
+        // 并发写入
+        var writeTasks = Enumerable.Range(0, concurrentWrites).Select(async i =>
+        {
+            var data = System.Text.Encoding.UTF8.GetBytes($"Test data {i}");
+            var id = await securityManager.StoreSecureDataAsync(data);
+            dataIds.Add(id);
+        }).ToArray();
+
+        await Task.WhenAll(writeTasks);
+
+        // 验证所有数据可读取
+        var readTasks = dataIds.Select(async id =>
+        {
+            var data = await securityManager.RetrieveSecureDataAsync(id);
+            return data;
+        }).ToArray();
+
+        var results = await Task.WhenAll(readTasks);
+
+        // 清理
+        var cleanupTasks = dataIds.Select(id => securityManager.ClearSecureDataAsync(id)).ToArray();
+        await Task.WhenAll(cleanupTasks);
+
+        await securityManager.DisposeAsync();
+
+        // 验证
+        results.Should().NotContainNulls("所有数据应该可读取");
+        results.Should().HaveCount(concurrentWrites, "应该读取所有写入的数据");
+    }
+
+    /// <summary>
+    /// 大数据处理测试 - 验证系统处理大量数据的能力
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Stability")]
+    [Trait("Duration", "Medium")]
+    public async Task System_Should_HandleLargeData_Efficiently()
+    {
+        var securityManager = _context.GetService<ISecurityManager>();
+        await securityManager.InitializeAsync();
+
+        var dataSizes = new[] { 1024, 10 * 1024, 100 * 1024, 1024 * 1024 }; // 1KB, 10KB, 100KB, 1MB
+        var monitor = new PerformanceMonitor(_context.LoggerFactory.CreateLogger<PerformanceMonitor>());
+
+        foreach (var size in dataSizes)
+        {
+            var data = new byte[size];
+            new Random().NextBytes(data);
+
+            string? dataId = null;
+
+            try
+            {
+                // 存储
+                using (var storeTimer = monitor.BeginOperation($"Store_{size}"))
+                {
+                    dataId = await securityManager.StoreSecureDataAsync(data);
+                    storeTimer.MarkSuccess();
+                }
+
+                // 检索
+                byte[]? retrieved = null;
+                using (var retrieveTimer = monitor.BeginOperation($"Retrieve_{size}"))
+                {
+                    retrieved = await securityManager.RetrieveSecureDataAsync(dataId);
+                    retrieveTimer.MarkSuccess();
+                }
+
+                // 验证
+                retrieved.Should().NotBeNull();
+                retrieved.Should().HaveCount(size);
+
+                var storeStats = monitor.GetOperationStats($"Store_{size}");
+                var retrieveStats = monitor.GetOperationStats($"Retrieve_{size}");
+
+                _logger.LogInformation(
+                    "大小: {Size} bytes - 存储: {StoreTime:F2}ms, 检索: {RetrieveTime:F2}ms",
+                    size, storeStats.AverageDuration, retrieveStats.AverageDuration);
+
+                // 性能断言 - 1MB数据应在合理时间内处理
+                if (size == 1024 * 1024)
+                {
+                    storeStats.AverageDuration.Should().BeLessThan(1000, "1MB数据存储应在1秒内完成");
+                    retrieveStats.AverageDuration.Should().BeLessThan(1000, "1MB数据检索应在1秒内完成");
+                }
+            }
+            finally
+            {
+                if (dataId != null)
+                {
+                    await securityManager.ClearSecureDataAsync(dataId);
+                }
+            }
+        }
+
+        await securityManager.DisposeAsync();
+    }
+
+    /// <summary>
     /// 执行典型操作
     /// </summary>
     private async Task PerformTypicalOperationsAsync(PerformanceMonitor monitor)

@@ -1,0 +1,105 @@
+{
+  "testRunConfig": {
+    "testTypes": "All",
+    "priority": "Normal",
+    "runInParallel": true,
+    "maxParallelism": 4,
+    "timeoutSeconds": 3600,
+    "generateCoverageReport": true,
+    "coverageReportFormats": [
+      "Html",
+      "Cobertura",
+      "MarkdownSummaryGithub"
+    ],
+    "failFast": false,
+    "outputDirectory": "TestResults",
+    "verbosity": "normal",
+    "collectDiagnostics": false
+  },
+  "environments": {
+    "development": {
+      "testTypes": "Unit,Integration",
+      "runInParallel": true,
+      "maxParallelism": 4,
+      "verbosity": "normal"
+    },
+    "ci": {
+      "testTypes": "All",
+      "runInParallel": true,
+      "maxParallelism": 2,
+      "verbosity": "minimal",
+      "generateCoverageReport": true
+    },
+    "production": {
+      "testTypes": "Integration,Performance,Security",
+      "runInParallel": false,
+      "verbosity": "detailed",
+      "failFast": true
+    },
+    "stability": {
+      "testTypes": "Stability",
+      "runInParallel": false,
+      "timeoutSeconds": 86400,
+      "verbosity": "detailed"
+    }
+  },
+  "testProjects": {
+    "unit": {
+      "path": "../Occop.Tests/Occop.Tests.csproj",
+      "enabled": true,
+      "priority": 5
+    },
+    "integration": {
+      "path": "../Occop.IntegrationTests/Occop.IntegrationTests.csproj",
+      "enabled": true,
+      "priority": 3
+    },
+    "performance": {
+      "path": "../Occop.PerformanceTests/Occop.PerformanceTests.csproj",
+      "enabled": true,
+      "priority": 2
+    },
+    "security": {
+      "path": "../Occop.SecurityTests/Occop.SecurityTests.csproj",
+      "enabled": true,
+      "priority": 4
+    },
+    "stability": {
+      "path": "../Occop.StabilityTests/Occop.StabilityTests.csproj",
+      "enabled": true,
+      "priority": 1
+    }
+  },
+  "coverageThresholds": {
+    "line": 80.0,
+    "branch": 75.0,
+    "method": 80.0
+  },
+  "performanceThresholds": {
+    "authenticationInit": {
+      "averageMs": 100,
+      "p95Ms": 150,
+      "p99Ms": 200
+    },
+    "dataEncryption": {
+      "averageMs": 50,
+      "p95Ms": 75,
+      "p99Ms": 100
+    },
+    "dataDecryption": {
+      "averageMs": 50,
+      "p95Ms": 75,
+      "p99Ms": 100
+    },
+    "secureStorage": {
+      "averageMs": 100,
+      "p95Ms": 150,
+      "p99Ms": 200
+    }
+  },
+  "stabilityThresholds": {
+    "maxMemoryIncreasePercent": 20.0,
+    "maxErrorRatePercent": 1.0,
+    "maxPerformanceDegradationPercent": 20.0
+  }
+}
