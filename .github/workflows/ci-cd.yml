@@ -1,0 +1,286 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: 'src/Occop.sln'
+
+jobs:
+  build:
+    name: Build and Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+    - name: Run Unit Tests
+      run: dotnet test tests/Occop.Tests/Occop.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=unit-tests.trx"
+
+    - name: Upload Unit Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: unit-test-results
+        path: '**/unit-tests.trx'
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore tests/Occop.IntegrationTests/Occop.IntegrationTests.csproj
+
+    - name: Run Integration Tests
+      run: dotnet test tests/Occop.IntegrationTests/Occop.IntegrationTests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=integration-tests.trx" --collect:"XPlat Code Coverage"
+
+    - name: Upload Integration Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-test-results
+        path: '**/integration-tests.trx'
+
+    - name: Upload Coverage Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-coverage
+        path: '**/coverage.cobertura.xml'
+
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore tests/Occop.SecurityTests/Occop.SecurityTests.csproj
+
+    - name: Run Security Tests
+      run: dotnet test tests/Occop.SecurityTests/Occop.SecurityTests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=security-tests.trx" --collect:"XPlat Code Coverage"
+
+    - name: Upload Security Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-test-results
+        path: '**/security-tests.trx'
+
+    - name: Upload Coverage Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-coverage
+        path: '**/coverage.cobertura.xml'
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore tests/Occop.PerformanceTests/Occop.PerformanceTests.csproj
+
+    - name: Run Performance Tests
+      run: dotnet test tests/Occop.PerformanceTests/Occop.PerformanceTests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=performance-tests.trx"
+
+    - name: Upload Performance Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-test-results
+        path: '**/performance-tests.trx'
+
+  code-coverage:
+    name: Generate Code Coverage Report
+    runs-on: ubuntu-latest
+    needs: [integration-tests, security-tests]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Integration Coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: integration-coverage
+        path: coverage/integration
+
+    - name: Download Security Coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: security-coverage
+        path: coverage/security
+
+    - name: Install ReportGenerator
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+    - name: Generate Coverage Report
+      run: |
+        reportgenerator \
+          -reports:"coverage/**/*.xml" \
+          -targetdir:"coverage/report" \
+          -reporttypes:"Html;Cobertura;MarkdownSummaryGithub" \
+          -assemblyfilters:"+Occop.*"
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/report
+
+    - name: Add Coverage PR Comment
+      if: github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        recreate: true
+        path: coverage/report/SummaryGithub.md
+
+  test-report:
+    name: Generate Test Report
+    runs-on: ubuntu-latest
+    needs: [build, integration-tests, security-tests, performance-tests]
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download All Test Results
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-test-results'
+        path: test-results
+
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: 'test-results/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+  static-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+    - name: Run Security Scan
+      run: |
+        dotnet tool install --global security-scan
+        security-scan ${{ env.SOLUTION_PATH }} || true
+      continue-on-error: true
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, integration-tests, security-tests]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment:
+      name: staging
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Publish Application
+      run: dotnet publish src/Occop.UI/Occop.UI.csproj --configuration Release --output ./publish
+
+    - name: Deploy to Staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your deployment commands here
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, integration-tests, security-tests, performance-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Publish Application
+      run: dotnet publish src/Occop.UI/Occop.UI.csproj --configuration Release --output ./publish
+
+    - name: Deploy to Production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your deployment commands here
