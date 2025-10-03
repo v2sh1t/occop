@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Occop.Core.Authentication;
+using Occop.Services.Authentication;
 using Occop.Core.Security;
 using Xunit;
 

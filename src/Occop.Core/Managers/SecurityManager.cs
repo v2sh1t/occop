@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Occop.Core.Patterns;
 using Occop.Core.Patterns.Observer;
 
+using OccobObserver = Occop.Core.Patterns.Observer;
 namespace Occop.Core.Managers
 {
     /// <summary>
@@ -173,13 +174,13 @@ namespace Occop.Core.Managers
         /// 注册安全事件观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        void RegisterSecurityObserver(IObserver<SecurityEventData> observer);
+        void RegisterSecurityObserver(OccobObserver.IObserver<SecurityEventData> observer);
 
         /// <summary>
         /// 注销安全事件观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        void UnregisterSecurityObserver(IObserver<SecurityEventData> observer);
+        void UnregisterSecurityObserver(OccobObserver.IObserver<SecurityEventData> observer);
 
         /// <summary>
         /// 清理安全相关资源
@@ -192,7 +193,7 @@ namespace Occop.Core.Managers
     /// </summary>
     public sealed class SecurityManager : Singleton<SecurityManager>, ISecurityManager, ISingletonInitializer, IDisposable
     {
-        private readonly SubjectBase<SecurityEventData> _securityEventSubject;
+        private readonly OccobObserver.SubjectBase<SecurityEventData> _securityEventSubject;
         private bool _isAuthenticated;
         private string? _currentUserId;
         private SecureString? _currentAccessToken;
@@ -415,7 +416,7 @@ namespace Occop.Core.Managers
         /// 注册安全事件观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        public void RegisterSecurityObserver(IObserver<SecurityEventData> observer)
+        public void RegisterSecurityObserver(OccobObserver.IObserver<SecurityEventData> observer)
         {
             _securityEventSubject.Attach(observer);
         }
@@ -424,7 +425,7 @@ namespace Occop.Core.Managers
         /// 注销安全事件观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        public void UnregisterSecurityObserver(IObserver<SecurityEventData> observer)
+        public void UnregisterSecurityObserver(OccobObserver.IObserver<SecurityEventData> observer)
         {
             _securityEventSubject.Detach(observer);
         }
@@ -541,9 +542,9 @@ namespace Occop.Core.Managers
         /// <summary>
         /// 安全事件主题的具体实现
         /// </summary>
-        private class SecurityEventSubject : SubjectBase<SecurityEventData>
+        private class SecurityEventSubject : OccobObserver.SubjectBase<SecurityEventData>
         {
-            protected override void OnNotificationError(IObserver<SecurityEventData> observer, SecurityEventData data, Exception exception)
+            protected override void OnNotificationError(OccobObserver.IObserver<SecurityEventData> observer, SecurityEventData data, Exception exception)
             {
                 // 在实际项目中，这里可以记录日志
                 // 当前为框架实现，暂时忽略错误

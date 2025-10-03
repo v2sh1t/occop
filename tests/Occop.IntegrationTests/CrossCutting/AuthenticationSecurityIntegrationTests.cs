@@ -2,7 +2,7 @@ using Xunit;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Occop.IntegrationTests.Infrastructure;
-using Occop.Core.Authentication;
+using Occop.Services.Authentication;
 using Occop.Core.Security;
 
 namespace Occop.IntegrationTests.CrossCutting

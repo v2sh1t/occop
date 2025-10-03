@@ -18,7 +18,7 @@ namespace Occop.Core.Patterns.Observer
     /// 泛型观察者接口，提供强类型的数据传递
     /// </summary>
     /// <typeparam name="T">传递的数据类型</typeparam>
-    public interface IObserver<in T>
+    public interface IObserver<T>
     {
         /// <summary>
         /// 接收来自主题的强类型更新通知
@@ -51,7 +51,7 @@ namespace Occop.Core.Patterns.Observer
     /// 泛型异步观察者接口
     /// </summary>
     /// <typeparam name="T">传递的数据类型</typeparam>
-    public interface IAsyncObserver<in T>
+    public interface IAsyncObserver<T>
     {
         /// <summary>
         /// 异步接收来自主题的强类型更新通知
@@ -84,7 +84,7 @@ namespace Occop.Core.Patterns.Observer
     /// 带优先级的泛型观察者接口
     /// </summary>
     /// <typeparam name="T">传递的数据类型</typeparam>
-    public interface IPriorityObserver<in T> : IObserver<T>
+    public interface IPriorityObserver<T> : IObserver<T>
     {
         /// <summary>
         /// 观察者的优先级（数值越大优先级越高）
@@ -109,7 +109,7 @@ namespace Occop.Core.Patterns.Observer
     /// 泛型条件观察者接口
     /// </summary>
     /// <typeparam name="T">传递的数据类型</typeparam>
-    public interface IConditionalObserver<in T> : IObserver<T>
+    public interface IConditionalObserver<T> : IObserver<T>
     {
         /// <summary>
         /// 检查是否应该接收此次更新

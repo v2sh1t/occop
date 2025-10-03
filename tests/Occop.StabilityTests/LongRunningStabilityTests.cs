@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Occop.Core.Authentication;
+using Occop.Services.Authentication;
 using Occop.Core.Performance;
 using Occop.Core.Security;
 using Occop.IntegrationTests.Infrastructure;

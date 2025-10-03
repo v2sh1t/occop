@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Occop.Core.Patterns;
-using Occop.Core.Patterns.Observer;
+using OccobObserver = Occop.Core.Patterns.Observer;
 using Occop.Core.Common;
 
 namespace Occop.Core.Managers
@@ -190,13 +190,13 @@ namespace Occop.Core.Managers
         /// 注册配置变更观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        void RegisterConfigurationObserver(IObserver<ConfigurationEventData> observer);
+        void RegisterConfigurationObserver(OccobObserver.IObserver<ConfigurationEventData> observer);
 
         /// <summary>
         /// 注销配置变更观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        void UnregisterConfigurationObserver(IObserver<ConfigurationEventData> observer);
+        void UnregisterConfigurationObserver(OccobObserver.IObserver<ConfigurationEventData> observer);
     }
 
     /// <summary>
@@ -265,7 +265,7 @@ namespace Occop.Core.Managers
     /// </summary>
     public sealed class ConfigurationManager : Singleton<ConfigurationManager>, IConfigurationManager, ISingletonInitializer, IDisposable, INotifyPropertyChangedEx
     {
-        private readonly SubjectBase<ConfigurationEventData> _configurationEventSubject;
+        private readonly OccobObserver.SubjectBase<ConfigurationEventData> _configurationEventSubject;
         private readonly Dictionary<string, object?> _configurationData;
         private readonly Dictionary<string, ConfigurationItem> _configurationSchema;
         private readonly object _lockObject = new object();
@@ -633,7 +633,7 @@ namespace Occop.Core.Managers
         /// 注册配置变更观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        public void RegisterConfigurationObserver(IObserver<ConfigurationEventData> observer)
+        public void RegisterConfigurationObserver(OccobObserver.IObserver<ConfigurationEventData> observer)
         {
             _configurationEventSubject.Attach(observer);
         }
@@ -642,7 +642,7 @@ namespace Occop.Core.Managers
         /// 注销配置变更观察者
         /// </summary>
         /// <param name="observer">观察者</param>
-        public void UnregisterConfigurationObserver(IObserver<ConfigurationEventData> observer)
+        public void UnregisterConfigurationObserver(OccobObserver.IObserver<ConfigurationEventData> observer)
         {
             _configurationEventSubject.Detach(observer);
         }
@@ -832,9 +832,9 @@ namespace Occop.Core.Managers
         /// <summary>
         /// 配置事件主题的具体实现
         /// </summary>
-        private class ConfigurationEventSubject : SubjectBase<ConfigurationEventData>
+        private class ConfigurationEventSubject : OccobObserver.SubjectBase<ConfigurationEventData>
         {
-            protected override void OnNotificationError(IObserver<ConfigurationEventData> observer, ConfigurationEventData data, Exception exception)
+            protected override void OnNotificationError(OccobObserver.IObserver<ConfigurationEventData> observer, ConfigurationEventData data, Exception exception)
             {
                 // 在实际项目中，这里可以记录日志
                 // 当前为框架实现，暂时忽略错误

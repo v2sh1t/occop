@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
-using Occop.Core.Authentication;
+using Occop.Services.Authentication;
 
 namespace Occop.UI.ViewModels
 {

@@ -1,3 +1,5 @@
+using Occop.Core.Security;
+
 namespace Occop.Core.Models.Security
 {
     /// <summary>

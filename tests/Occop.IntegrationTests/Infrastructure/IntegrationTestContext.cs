@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Occop.Core.Authentication;
+using Occop.Services.Authentication;
 using Occop.Core.Security;
 using Occop.Services.Authentication;
 using Occop.Services.Logging;

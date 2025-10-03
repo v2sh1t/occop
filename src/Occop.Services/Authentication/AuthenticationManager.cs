@@ -1,9 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Occop.Core.Security;
-using Occop.Services.Authentication;
 
-namespace Occop.Core.Authentication
+namespace Occop.Services.Authentication
 {
     /// <summary>
     /// High-level authentication manager that coordinates all authentication components

@@ -8,7 +8,7 @@ using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Input;
-using Occop.Core.Authentication;
+using Occop.Services.Authentication;
 using Occop.UI.Models;
 using Occop.UI.Services;
 using Occop.Services;

@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
-using Occop.Core.Authentication;
+using Occop.Services.Authentication;
 using Occop.Core.Security;
 using Occop.Services.Authentication;
 using Occop.Services;
