@@ -40,24 +40,24 @@ namespace Occop.Core.Security
         private void InitializePatterns()
         {
             // API密钥和令牌
-            AddPattern("ApiKey", @"(api[_-]?key|apikey|api[_-]?token)[\"'\s:=]+([a-zA-Z0-9\-_]{16,})",
+            AddPattern("ApiKey", @"(api[_-]?key|apikey|api[_-]?token)[""'\s:=]+([a-zA-Z0-9\-_]{16,})",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
             AddPattern("BearerToken", @"Bearer\s+([a-zA-Z0-9\-_\.]+)",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
-            AddPattern("AccessToken", @"(access[_-]?token|accesstoken)[\"'\s:=]+([a-zA-Z0-9\-_\.]{16,})",
+            AddPattern("AccessToken", @"(access[_-]?token|accesstoken)[""'\s:=]+([a-zA-Z0-9\-_\.]{16,})",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
             // 密码和密钥
-            AddPattern("Password", @"(password|passwd|pwd)[\"'\s:=]+([^\s,""'}{]{4,})",
+            AddPattern("Password", @"(password|passwd|pwd)[""'\s:=]+([^\s,""'}{]{4,})",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
-            AddPattern("Secret", @"(secret|client[_-]?secret)[\"'\s:=]+([a-zA-Z0-9\-_]{16,})",
+            AddPattern("Secret", @"(secret|client[_-]?secret)[""'\s:=]+([a-zA-Z0-9\-_]{16,})",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
             // 加密密钥
-            AddPattern("EncryptionKey", @"(encryption[_-]?key|aes[_-]?key|cipher[_-]?key)[\"'\s:=]+([a-zA-Z0-9+/=]{16,})",
+            AddPattern("EncryptionKey", @"(encryption[_-]?key|aes[_-]?key|cipher[_-]?key)[""'\s:=]+([a-zA-Z0-9+/=]{16,})",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
             AddPattern("PrivateKey", @"-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----[\s\S]*?-----END\s+(?:RSA\s+)?PRIVATE\s+KEY-----",
@@ -81,21 +81,21 @@ namespace Occop.Core.Security
             AddPattern("JWT", @"eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*",
                 SensitivityLevel.Critical, RegexOptions.None);
 
-            AddPattern("SessionToken", @"(session[_-]?token|session[_-]?id)[\"'\s:=]+([a-zA-Z0-9\-_]{16,})",
+            AddPattern("SessionToken", @"(session[_-]?token|session[_-]?id)[""'\s:=]+([a-zA-Z0-9\-_]{16,})",
                 SensitivityLevel.High, RegexOptions.IgnoreCase);
 
             // 数据库连接信息
             AddPattern("ConnectionString", @"(Server|Data Source|Host)=([^;]+);.*?(Password|Pwd)=([^;]+)",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
-            AddPattern("DatabasePassword", @"(database[_-]?password|db[_-]?pwd)[\"'\s:=]+([^\s,""'}{]+)",
+            AddPattern("DatabasePassword", @"(database[_-]?password|db[_-]?pwd)[""'\s:=]+([^\s,""'}{]+)",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
 
             // GitHub和OAuth令牌
             AddPattern("GitHubToken", @"gh[pousr]_[a-zA-Z0-9]{36}",
                 SensitivityLevel.Critical, RegexOptions.None);
 
-            AddPattern("OAuthSecret", @"(oauth[_-]?secret|client[_-]?secret)[\"'\s:=]+([a-zA-Z0-9\-_]{16,})",
+            AddPattern("OAuthSecret", @"(oauth[_-]?secret|client[_-]?secret)[""'\s:=]+([a-zA-Z0-9\-_]{16,})",
                 SensitivityLevel.Critical, RegexOptions.IgnoreCase);
         }
 

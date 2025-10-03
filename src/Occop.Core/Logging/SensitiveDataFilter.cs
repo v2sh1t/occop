@@ -41,18 +41,18 @@ namespace Occop.Core.Logging
         {
             // API密钥和令牌
             // API keys and tokens
-            AddPattern("ApiKey", @"(api[_-]?key|apikey|api[_-]?token)[\"'\s:=]+([a-zA-Z0-9\-_]{16,})", RegexOptions.IgnoreCase);
+            AddPattern("ApiKey", @"(api[_-]?key|apikey|api[_-]?token)[""'\s:=]+([a-zA-Z0-9\-_]{16,})", RegexOptions.IgnoreCase);
             AddPattern("BearerToken", @"Bearer\s+([a-zA-Z0-9\-_\.]+)", RegexOptions.IgnoreCase);
-            AddPattern("AccessToken", @"(access[_-]?token|accesstoken)[\"'\s:=]+([a-zA-Z0-9\-_\.]{16,})", RegexOptions.IgnoreCase);
+            AddPattern("AccessToken", @"(access[_-]?token|accesstoken)[""'\s:=]+([a-zA-Z0-9\-_\.]{16,})", RegexOptions.IgnoreCase);
 
             // 密码
             // Passwords
-            AddPattern("Password", @"(password|passwd|pwd)[\"'\s:=]+([^\s,""'}{]{4,})", RegexOptions.IgnoreCase);
-            AddPattern("Secret", @"(secret|client[_-]?secret)[\"'\s:=]+([a-zA-Z0-9\-_]{16,})", RegexOptions.IgnoreCase);
+            AddPattern("Password", @"(password|passwd|pwd)[""'\s:=]+([^\s,""'}{]{4,})", RegexOptions.IgnoreCase);
+            AddPattern("Secret", @"(secret|client[_-]?secret)[""'\s:=]+([a-zA-Z0-9\-_]{16,})", RegexOptions.IgnoreCase);
 
             // 加密密钥
             // Encryption keys
-            AddPattern("EncryptionKey", @"(encryption[_-]?key|aes[_-]?key|cipher[_-]?key)[\"'\s:=]+([a-zA-Z0-9+/=]{16,})", RegexOptions.IgnoreCase);
+            AddPattern("EncryptionKey", @"(encryption[_-]?key|aes[_-]?key|cipher[_-]?key)[""'\s:=]+([a-zA-Z0-9+/=]{16,})", RegexOptions.IgnoreCase);
             AddPattern("PrivateKey", @"-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----[\s\S]*?-----END\s+(?:RSA\s+)?PRIVATE\s+KEY-----", RegexOptions.IgnoreCase);
 
             // 信用卡号
